@@ -4,13 +4,13 @@ using UnityEngine;
 
 public class PullSpring : MonoBehaviour {
 
-    string inputButtonName = "Pull";
+    public string inputButtonName = "Pull";
 
-    float distance = 50;
-    float speed = 1;
-    float power = 2000;
+    public float distance = 50;
+    public float speed = 1;
+    public float power = 2000;
 
-    GameObject ball;
+    public GameObject ball;
 
     private bool ready = false;
     private bool fire = false;
@@ -35,7 +35,7 @@ public class PullSpring : MonoBehaviour {
             //Shoot the ball
             if (fire && ready) {
                 ball.transform.TransformDirection(Vector3.forward * 10);
-                ball.rigidbody.AddForce(0, 0, moveCount * power);
+                ball.GetComponent<Rigidbody>().AddForce(0, 0, moveCount * power);
                 fire = false;
                 ready = false;
             }

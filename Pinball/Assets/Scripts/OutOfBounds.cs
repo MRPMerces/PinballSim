@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class OutOfBounds : MonoBehaviour {
 
-    Transform ball;
+    public Transform ball;
 
     Vector3 startingPos;
 

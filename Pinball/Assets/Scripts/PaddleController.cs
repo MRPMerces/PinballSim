@@ -5,12 +5,12 @@ using UnityEngine;
 public class PaddleController : MonoBehaviour {
 
     //Parameters
-    float restPosition = 0F;
-    float pressedPosition = 45F;
-    float flipperStrength = 10F;
-    float flipperDamper = 1F;
+    public float restPosition = 0F;
+    public float pressedPosition = 45F;
+    public float flipperStrength = 10F;
+    public float flipperDamper = 1F;
 
-    string inputButtonName = "LeftPaddle";
+    public string inputButtonName = "LeftPaddle";
 
     HingeJoint hingeJoint;
 
@@ -37,8 +37,14 @@ public class PaddleController : MonoBehaviour {
         }
 
         hingeJoint.spring = JointSpring;
+
+        JointLimits limits = hingeJoint.limits;
+        limits.min = restPosition;
+        limits.bounciness = 0;
+        limits.bounceMinVelocity = 0;
+        limits.max = pressedPosition;
+        hingeJoint.limits = limits;
         hingeJoint.useLimits = true;
-        hingeJoint.limits.min = restPosition;
-        hingeJoint.limits.max = pressedPosition;
+        hingeJoint.limits = limits;
     }
 }
