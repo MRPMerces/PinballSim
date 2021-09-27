@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PaddleController : MonoBehaviour {
+public class PaddleController : MonoBehaviour
+{
 
     //Parameters
     public float restPosition = 0F;
@@ -13,31 +14,19 @@ public class PaddleController : MonoBehaviour {
     public string inputButtonName = "LeftPaddle";
 
     HingeJoint hingeJoint;
+    JointSpring JointSpring;
+
+    float flipTime = 0f;
+    float waitTime = 0f;
+
 
     // Start is called before the first frame update
     void Start() {
         hingeJoint = GetComponent<HingeJoint>();
 
+        JointSpring = new JointSpring();
+
         hingeJoint.useSpring = true;
-    }
-
-    // Update is called once per frame
-    void Update() {
-        JointSpring JointSpring = new JointSpring();
-
-        JointSpring.spring = flipperStrength;
-        JointSpring.damper = flipperDamper;
-
-        if (Input.GetButton(inputButtonName)) {
-            JointSpring.targetPosition = pressedPosition;
-        }
-
-        else {
-            JointSpring.targetPosition = restPosition;
-        }
-
-        hingeJoint.spring = JointSpring;
-
         JointLimits limits = hingeJoint.limits;
         limits.min = restPosition;
         limits.bounciness = 0;
@@ -46,5 +35,45 @@ public class PaddleController : MonoBehaviour {
         hingeJoint.limits = limits;
         hingeJoint.useLimits = true;
         hingeJoint.limits = limits;
+        JointSpring.spring = flipperStrength;
+        JointSpring.damper = flipperDamper;
+    }
+
+    // Update is called once per frame
+    void Update() {
+        if(waitTime > 0) {
+            waitTime -= Time.deltaTime;
+        }
+        
+        if (waitTime <= 0 && flipTime > 0) {
+            activate();
+            flipTime -= Time.deltaTime;
+        }
+
+        else if (Input.GetKey(inputButtonName)) {
+            activate();
+        }
+
+        else {
+            JointSpring.targetPosition = restPosition;
+        }
+
+        hingeJoint.spring = JointSpring;
+
+
+    }
+
+    void OnCollisionEnter(Collision _other) {
+
+        if (_other.gameObject.tag == "Ball"){
+
+            waitTime = 0.5f;
+            flipTime = 1f;
+        }
+
+    }
+
+    void activate() {
+        JointSpring.targetPosition = pressedPosition;
     }
 }

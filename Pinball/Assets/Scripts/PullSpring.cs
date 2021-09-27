@@ -23,7 +23,7 @@ public class PullSpring : MonoBehaviour {
 
     // Update is called once per frame
     void Update() {
-        if (Input.GetButton(inputButtonName)) {
+        if (Input.GetKey(inputButtonName)) {
             //As the button is held down, slowly move the piece
             if (moveCount < distance) {
                 transform.Translate(0, 0, -speed * Time.deltaTime);
@@ -57,4 +57,8 @@ public class PullSpring : MonoBehaviour {
         }
     }
 }
+
+
+
+// FIXME:: spamming space fucks everything.
 
