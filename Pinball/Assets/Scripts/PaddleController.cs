@@ -12,12 +12,13 @@ public class PaddleController : MonoBehaviour
     public float flipperDamper = 1F;
 
     public string inputButtonName = "LeftPaddle";
-
-    HingeJoint hingeJoint;
+    private new HingeJoint hingeJoint;
     JointSpring JointSpring;
 
     float flipTime = 0f;
     float waitTime = 0f;
+
+    Matrix matrix;
 
 
     // Start is called before the first frame update
@@ -37,6 +38,7 @@ public class PaddleController : MonoBehaviour
         hingeJoint.limits = limits;
         JointSpring.spring = flipperStrength;
         JointSpring.damper = flipperDamper;
+        
     }
 
     // Update is called once per frame

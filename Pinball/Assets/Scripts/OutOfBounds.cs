@@ -15,11 +15,15 @@ public class OutOfBounds : MonoBehaviour {
 
     // Update is called once per frame
     void Update() {
+
+
         if (Input.GetKey("r"))
         {
             ball.GetComponent<Rigidbody>().velocity = Vector3.zero;
             ball.transform.position = startingPos;
         }
+
+   
     }
 
     void OnCollisionEnter(Collision _other) {
