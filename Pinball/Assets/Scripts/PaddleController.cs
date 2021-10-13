@@ -16,7 +16,6 @@ public class PaddleController : MonoBehaviour
     JointSpring JointSpring;
 
     float flipTime = 0f;
-    float waitTime = 0f;
 
     Matrix matrix;
 
@@ -38,17 +37,13 @@ public class PaddleController : MonoBehaviour
         hingeJoint.limits = limits;
         JointSpring.spring = flipperStrength;
         JointSpring.damper = flipperDamper;
-        
+
     }
 
     // Update is called once per frame
     void Update() {
-        if(waitTime > 0) {
-            waitTime -= Time.deltaTime;
-        }
-        
-        if (waitTime <= 0 && flipTime > 0) {
-            activate();
+        if (flipTime > 0) {
+            JointSpring.targetPosition = pressedPosition;
             flipTime -= Time.deltaTime;
         }
 
@@ -61,21 +56,9 @@ public class PaddleController : MonoBehaviour
         }
 
         hingeJoint.spring = JointSpring;
-
-
     }
 
-    void OnCollisionEnter(Collision _other) {
-
-        if (_other.gameObject.tag == "Ball"){
-
-            waitTime = 0.5f;
-            flipTime = 1f;
-        }
-
-    }
-
-    void activate() {
-        JointSpring.targetPosition = pressedPosition;
+    public void activate() {
+        flipTime = 1f;
     }
 }

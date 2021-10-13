@@ -10,15 +10,13 @@ public class Fps : MonoBehaviour
     public Text text;
 
     // Update is called once per frame
-    void Update()
-    {
+    void Update() {
         fps++;
         fpsTimer += Time.deltaTime;
 
-        if (fpsTimer > 1)
-        {
+        if (fpsTimer > 1) {
             text.text = "Fps: " + fps;
-            fpsTimer = 0;
+            fpsTimer -=1f;
             fps = 0;
         }
     }

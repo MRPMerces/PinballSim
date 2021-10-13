@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 public class LightSensor
@@ -8,16 +9,17 @@ public class LightSensor
     RaycastHit hit;
 
     GameObject ball;
-    GameObject sensor;
+    public GameObject sensor { get; protected set; }
 
-    int x;
-    int y;
+    Action<LightSensor> cbSensorChanged;
+
+    public int x { get; protected set; }
+    public int y { get; protected set; }
 
     float colorTime = 0f;
     bool timer = false;
 
-    public LightSensor(GameObject sensor, GameObject ball, int x, int y)
-    {
+    public LightSensor(GameObject sensor, GameObject ball, int x, int y) {
         this.sensor = sensor;
         this.ball = ball;
         this.x = x;
@@ -25,8 +27,7 @@ public class LightSensor
         sensor.GetComponent<SpriteRenderer>().color = Color.green;
     }
 
-    public void update()
-    {
+    public void update() {
         // Bit shift the index of the layer (8) to get a bit mask
         int layerMask = 1 << 8;
 
@@ -35,27 +36,33 @@ public class LightSensor
         layerMask = ~layerMask;
 
         // Does the ray intersect any objects excluding the player layer
-        if (Physics.Raycast(sensor.transform.position, sensor.transform.TransformDirection(new Vector3(0, 0, -1)), out hit, Mathf.Infinity, layerMask))
-        {
+        if (Physics.Raycast(sensor.transform.position, sensor.transform.TransformDirection(new Vector3(0, 0, -1)), out hit, Mathf.Infinity, layerMask)) {
 
-            if (hit.collider.gameObject == ball)
-            {
+            if (hit.collider.gameObject == ball) {
                 Debug.DrawRay(sensor.transform.position, sensor.transform.TransformDirection(new Vector3(0, 1, 0)) * hit.distance, Color.yellow);
-                Debug.Log("Sensor:" + x + "," + y);
                 sensor.GetComponent<SpriteRenderer>().color = Color.red;
+
+                cbSensorChanged(this);
+
                 timer = true;
             }
         }
 
-        if(colorTime > 2)
-        {
+        if (colorTime > 2) {
             sensor.GetComponent<SpriteRenderer>().color = Color.green;
             colorTime = 0;
         }
 
-        if (timer)
-        {
+        if (timer) {
             colorTime += Time.deltaTime;
         }
+    }
+
+    public void RegisterSensorChanged(Action<LightSensor> callbackfunc) {
+        cbSensorChanged += callbackfunc;
+    }
+
+    public void UnregisterSensorChanged(Action<LightSensor> callbackfunc) {
+        cbSensorChanged -= callbackfunc;
     }
 }

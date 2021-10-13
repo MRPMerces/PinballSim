@@ -31,6 +31,7 @@ public class PullSpring : MonoBehaviour {
                 fire = true;
             }
         }
+
         else if (moveCount > 0) {
             //Shoot the ball
             if (fire && ready) {
