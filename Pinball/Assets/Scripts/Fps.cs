@@ -16,7 +16,7 @@ public class Fps : MonoBehaviour
 
         if (fpsTimer > 1) {
             text.text = "Fps: " + fps;
-            fpsTimer -=1f;
+            fpsTimer -= 1f;
             fps = 0;
         }
     }
