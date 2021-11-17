@@ -1,24 +1,19 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class PaddleController : MonoBehaviour
 {
-
-    //Parameters
-    public float restPosition = 0F;
-    public float pressedPosition = 45F;
-    public float flipperStrength = 10F;
-    public float flipperDamper = 1F;
-
+    public float targetPosition = 0F;
     public string inputButtonName = "LeftPaddle";
+
     private new HingeJoint hingeJoint;
     JointSpring JointSpring;
 
-    float flipTime = 0f;
-
-    Matrix matrix;
-
+    float triggertime = 0f;
+    float waitTime = 0f;
+    bool wait;
 
     // Start is called before the first frame update
     void Start() {
@@ -27,38 +22,63 @@ public class PaddleController : MonoBehaviour
         JointSpring = new JointSpring();
 
         hingeJoint.useSpring = true;
+
         JointLimits limits = hingeJoint.limits;
-        limits.min = restPosition;
+        limits.min = 0;
         limits.bounciness = 0;
         limits.bounceMinVelocity = 0;
-        limits.max = pressedPosition;
-        hingeJoint.limits = limits;
+        limits.max = targetPosition;
         hingeJoint.useLimits = true;
         hingeJoint.limits = limits;
-        JointSpring.spring = flipperStrength;
-        JointSpring.damper = flipperDamper;
 
+        JointSpring.spring = 1000000000;
+        JointSpring.damper = 0;
     }
 
     // Update is called once per frame
     void Update() {
-        if (flipTime > 0) {
-            JointSpring.targetPosition = pressedPosition;
-            flipTime -= Time.deltaTime;
-        }
 
-        else if (Input.GetKey(inputButtonName)) {
-            activate();
+        if ((wait && waitTime <= 0) || Input.GetKey(inputButtonName)) {
+            triggerFlipper();
+            wait = false;
         }
 
         else {
-            JointSpring.targetPosition = restPosition;
+            waitTime -= Time.deltaTime;
         }
 
-        hingeJoint.spring = JointSpring;
+        if (triggertime > 0) {
+            triggertime -= Time.deltaTime;
+        }
+
+        else {
+            JointSpring.targetPosition = 0;
+            hingeJoint.spring = JointSpring;
+        }
     }
 
-    public void activate() {
-        flipTime = 1f;
+    public void activate(float activationDelay = 0) {
+        if (activationDelay == 0) {
+            triggerFlipper();
+            return;
+        }
+        waitTime = activationDelay;
+        wait = true;
+    }
+
+    Action<PaddleController> cbPaddleActivated;
+
+    public void RegisterPaddleActivated(Action<PaddleController> callbackfunc) {
+        cbPaddleActivated += callbackfunc;
+    }
+
+    void triggerFlipper() {
+        //Debug.Log("activate");
+        triggertime = 0.1f;
+
+        JointSpring.targetPosition = targetPosition;
+        hingeJoint.spring = JointSpring;
+        
+        cbPaddleActivated?.Invoke(this);
     }
 }

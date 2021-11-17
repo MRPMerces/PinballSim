@@ -5,8 +5,6 @@ using UnityEngine;
 
 public class Matrix : MonoBehaviour
 {
-    public GameObject ball;
-
     public GameObject paddle_GO;
     PaddleController paddle;
 
@@ -16,19 +14,20 @@ public class Matrix : MonoBehaviour
     public Sprite sprite;
 
     LightSensor lightSensor1;
-    LightSensor lightSensor2;
 
-    float waitTime = 0f;
     float travelTime;
 
     bool travelTimer;
-    bool timer;
+
+    // hitCalculated will be set to true when a hit is calculated, and false when the flipper activates. This is for optimazation
+    bool hitCalculated;
 
     // Start is called before the first frame update
     void Start() {
         int size = 10;
         float t = size / 5;
         sensors = new LightSensor[size, size];
+
         for (int x = 0; x < size; x++) {
             for (int y = 0; y < size; y++) {
 
@@ -37,17 +36,18 @@ public class Matrix : MonoBehaviour
                 gameObject.transform.position = new Vector3(transform.position.x + (x / t), 0.1f, transform.position.z + (y / t));
                 gameObject.transform.rotation = Quaternion.AngleAxis(90, new Vector3(1, 0, 0));
 
-                gameObject.AddComponent<SpriteRenderer>();
-                gameObject.GetComponent<SpriteRenderer>().sprite = sprite;
+                SpriteRenderer renderer = gameObject.AddComponent<SpriteRenderer>();
+                renderer.sprite = sprite;
+                renderer.color = Color.green;
 
-                sensors[x, y] = new LightSensor(gameObject, ball, x, y);
-
+                sensors[x, y] = new LightSensor(gameObject);
                 sensors[x, y].RegisterSensorChanged(OnSensorChanged);
             }
         }
 
         paddle = paddle_GO.GetComponent<PaddleController>();
 
+        paddle.RegisterPaddleActivated(paddleActivated);
         outOfBounds_GO.GetComponent<OutOfBounds>().RegisterOutOfBounds(outOfBoundsTrigger);
     }
 
@@ -57,105 +57,113 @@ public class Matrix : MonoBehaviour
             lightSensor.update();
         }
 
-        if (timer && waitTime < 0) {
-            paddle.activate();
-            timer = false;
-        }
-
-        if (timer) {
-            waitTime -= Time.deltaTime;
-        }
-
         if (travelTimer) {
             travelTime += Time.deltaTime;
         }
     }
 
-    Action<LightSensor> cbSensorChanged;
-    Action<OutOfBounds> cbOutOfBounds;
-
-    public void RegisterSensorChanged(Action<LightSensor> callbackfunc) {
-        cbSensorChanged += callbackfunc;
-    }
-
-    public void UnregisterSensorChanged(Action<LightSensor> callbackfunc) {
-        cbSensorChanged -= callbackfunc;
-    }
-
-    public void RegisterOutOfBounds(Action<OutOfBounds> callbackfunc) {
-        cbOutOfBounds += callbackfunc;
-    }
-
-    public void UnregisterOutOfBounds(Action<OutOfBounds> callbackfunc) {
-        cbOutOfBounds -= callbackfunc;
-    }
-
     // Gets called whenever ANY Sensor changes
     void OnSensorChanged(LightSensor lightSensor) {
+        if (hitCalculated) {
+            return;
+        }
+
         if (lightSensor1 == null) {
             lightSensor1 = lightSensor;
             travelTimer = true;
             return;
         }
 
-        // If we read the same sensor twice we return.
+        // If we read the same sensor twice return.
         if (lightSensor1 == lightSensor) {
             return;
         }
 
         // If the ball is moving upwards, we discard the results.
-        if (lightSensor1.y < lightSensor.y) {
+        if (lightSensor1.sensor.transform.position.z < lightSensor.sensor.transform.position.z) {
             lightSensor1 = null;
-            lightSensor2 = null;
             return;
         }
 
-        // The ball have moved horisontally in the matrix. Meening that two sensors with different y cordinate have triggered.
+        // The ball have moved horisontally in the matrix. Meaning that two sensors with different x cordinates have triggered.
         // From this we can calculate the angle the ball is traveling at... ish.
-        if (lightSensor1.x != lightSensor.x) {
+        if (lightSensor1.sensor.transform.position.x != lightSensor.sensor.transform.position.x) {
             travelTimer = false;
 
-            lightSensor2 = lightSensor;
-
-            calcHit(lightSensor1, lightSensor2);
+            calculateHit(lightSensor1, lightSensor);
             return;
         }
 
-        // The ball have only moved verticly in the matrix. Meening that two sensors with the same y cordinate have triggered.
+        // The ball have only moved verticly in the matrix. Meening that two sensors with the same x cordinate have triggered.
         // From this we can assume that the angle the ball is traveling at is 0... ish.
-        else if ((lightSensor1.x == lightSensor.x) && (lightSensor1.y > lightSensor.y)) {
+        else if (lightSensor1.sensor.transform.position.z > lightSensor.sensor.transform.position.z) {
             travelTimer = false;
 
-            lightSensor2 = lightSensor;
-
-            calcHit(lightSensor1, lightSensor2, true);
+            calculateHit(lightSensor1, lightSensor, true);
             return;
         }
     }
 
+    void calculateHit(LightSensor sensor1, LightSensor sensor2, bool vertical = false) {
 
-    void calcHit(LightSensor sensor1, LightSensor sensor2, bool vertical = false) {
+        if (hitCalculated) {
+            return;
+        }
+
+        Debug.Log("hitCalced");
+
+        hitCalculated = true;
+
+        Vector3 sensor1Pos = sensor1.sensor.transform.position;
+        Vector3 sensor2Pos = sensor2.sensor.transform.position;
+        
         lightSensor1 = null;
-        lightSensor2 = null;
 
-        Vector3 pos1 = sensor1.sensor.transform.position;
-        Vector3 pos2 = sensor2.sensor.transform.position;
+        // Z is always positive. As a negative z means the ball is moving upwards wich we discard
+        float distanceTravveledInZ = sensor1Pos.z - sensor2Pos.z;
+        float zPerSecond = distanceTravveledInZ / travelTime;
 
         if (vertical) {
-            timer = true;
-            waitTime = travelTime;
+
+            // The ball is now at sensor 2, ich.
+
+            float distToPaddle_z = Mathf.Abs(sensor2Pos.z + transform.position.z - paddle_GO.transform.position.z);
+
+            paddle.activate(distToPaddle_z / zPerSecond);
+
             travelTime = 0f;
         }
 
-        /*
-         *compare the transform of the matrix + sensor, to the transform of the paddle.
-         * Calculate when it will hit, based on the traveltime per transform cordinate. And where it will hit on the paddle, as it slopes.
-         * Calculate the angle.
-         */
+        else {
+
+            // Z is always positive, X migth be negative
+
+            float distanceTravveledInX = Mathf.Abs(sensor1Pos.x - sensor2Pos.x);
+
+            float xPerSecond = distanceTravveledInX / travelTime;
+
+            // The ball is now at sensor 2, ich.
+
+            float distToPaddle_x = Mathf.Abs(sensor2Pos.x + transform.position.x - paddle_GO.transform.position.x);
+            float distToPaddle_z = Mathf.Abs(sensor2Pos.z + transform.position.z - paddle_GO.transform.position.z);
+
+            paddle.activate(distToPaddle_z / zPerSecond);
+
+            travelTime = 0f;
+
+        }
     }
 
     void outOfBoundsTrigger(OutOfBounds outOfBounds) {
         lightSensor1 = null;
-        lightSensor2 = null;
+        hitCalculated = false;
+    }
+
+    void paddleActivated(PaddleController paddleController) {
+        hitCalculated = false;
     }
 }
+
+
+// Optimizations*
+// If the flipper has been activated, stop updating the sensors. Will cause fps spikes though...

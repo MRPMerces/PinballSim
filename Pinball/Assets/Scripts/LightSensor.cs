@@ -6,25 +6,15 @@ using UnityEngine;
 public class LightSensor
 {
 
-    RaycastHit hit;
+    RaycastHit raycast;
 
-    GameObject ball;
     public GameObject sensor { get; protected set; }
-
-    Action<LightSensor> cbSensorChanged;
-
-    public int x { get; protected set; }
-    public int y { get; protected set; }
-
+    
     float colorTime = 0f;
     bool timer = false;
 
-    public LightSensor(GameObject sensor, GameObject ball, int x, int y) {
+    public LightSensor(GameObject sensor) {
         this.sensor = sensor;
-        this.ball = ball;
-        this.x = x;
-        this.y = y;
-        sensor.GetComponent<SpriteRenderer>().color = Color.green;
     }
 
     public void update() {
@@ -36,10 +26,9 @@ public class LightSensor
         layerMask = ~layerMask;
 
         // Does the ray intersect any objects excluding the player layer
-        if (Physics.Raycast(sensor.transform.position, sensor.transform.TransformDirection(new Vector3(0, 0, -1)), out hit, Mathf.Infinity, layerMask)) {
+        if (Physics.Raycast(sensor.transform.position, sensor.transform.TransformDirection(new Vector3(0, 0, -1)), out raycast, 10, layerMask)) {
 
-            if (hit.collider.gameObject == ball) {
-                Debug.DrawRay(sensor.transform.position, sensor.transform.TransformDirection(new Vector3(0, 1, 0)) * hit.distance, Color.yellow);
+            if (raycast.collider.tag == "Ball") {
                 sensor.GetComponent<SpriteRenderer>().color = Color.red;
 
                 cbSensorChanged(this);
@@ -58,11 +47,9 @@ public class LightSensor
         }
     }
 
+    Action<LightSensor> cbSensorChanged;
+
     public void RegisterSensorChanged(Action<LightSensor> callbackfunc) {
         cbSensorChanged += callbackfunc;
-    }
-
-    public void UnregisterSensorChanged(Action<LightSensor> callbackfunc) {
-        cbSensorChanged -= callbackfunc;
     }
 }
