@@ -1,9 +1,12 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿/*
+ * This script controlls the spring, that pushes the ball out of its start location.
+ */
+
 using UnityEngine;
 
 public class PullSpring : MonoBehaviour {
 
+    // Assign a input button to trigger the spring.
     public string inputButtonName = "Pull";
 
     public float distance = 50;
@@ -15,11 +18,6 @@ public class PullSpring : MonoBehaviour {
     private bool ready = false;
     private bool fire = false;
     private float moveCount = 0;
-
-    // Start is called before the first frame update
-    void Start() {
-
-    }
 
     // Update is called once per frame
     void Update() {
@@ -40,6 +38,7 @@ public class PullSpring : MonoBehaviour {
                 fire = false;
                 ready = false;
             }
+
             //Once we have reached the starting position fire off!
             transform.Translate(0, 0, 20 * Time.deltaTime);
             moveCount -= 20 * Time.deltaTime;
@@ -52,14 +51,10 @@ public class PullSpring : MonoBehaviour {
         }
     }
 
+    // Unity fucntion thats gets called whenever a object collides with the gameobjects box collider.
     void OnCollisionEnter(Collision _other) {
         if (_other.gameObject.tag == "Ball") {
             ready = true;
         }
     }
 }
-
-
-
-// FIXME:: spamming space fucks everything.
-

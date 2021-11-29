@@ -1,3 +1,7 @@
+/*
+ * This script is used to count how many runs the trainer has done. At the moment it doesn't work.
+ */
+
 using UnityEngine.UI;
 using UnityEngine;
 
